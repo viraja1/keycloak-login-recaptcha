@@ -124,6 +124,6 @@ public class RecaptchaUsernamePasswordForm extends UsernamePasswordForm implemen
         	forms.setAttribute("recaptchaRequired", true);
         	forms.setAttribute("recaptchaSiteKey", siteKey);
         	forms.addScript("https://www.google.com/recaptcha/api.js?hl=" + userLanguageTag);
-  }
+  	}
 
 }
