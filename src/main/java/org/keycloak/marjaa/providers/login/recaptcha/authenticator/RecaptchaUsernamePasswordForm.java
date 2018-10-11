@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import javax.ws.rs.core.Response;
 
 import javax.ws.rs.core.MultivaluedMap;
 
@@ -43,20 +44,7 @@ public class RecaptchaUsernamePasswordForm extends UsernamePasswordForm implemen
 					"validateRecaptcha(AuthenticationFlowContext, boolean, String, String) - Before the validation");
 		}
 
-		AuthenticatorConfigModel captchaConfig = context.getAuthenticatorConfig();
-		LoginFormsProvider form = context.form();
-		String userLanguageTag = context.getSession().getContext().resolveLocale(context.getUser()).toLanguageTag();
-
-		if (captchaConfig == null || captchaConfig.getConfig() == null
-				|| captchaConfig.getConfig().get(SITE_KEY) == null
-				|| captchaConfig.getConfig().get(SITE_SECRET) == null) {
-			form.addError(new FormMessage(null, Messages.RECAPTCHA_NOT_CONFIGURED));
-			return;
-		}
-		String siteKey = captchaConfig.getConfig().get(SITE_KEY);
-		form.setAttribute("recaptchaRequired", true);
-		form.setAttribute("recaptchaSiteKey", siteKey);
-		form.addScript("https://www.google.com/recaptcha/api.js?hl=" + userLanguageTag);
+		displayRecaptcha(context);
 
 		super.authenticate(context);
 	}
@@ -78,14 +66,15 @@ public class RecaptchaUsernamePasswordForm extends UsernamePasswordForm implemen
 
 			success = validateRecaptcha(context, success, captcha, secret);
 		}
+		displayRecaptcha(context);
 		if (success) {
 			super.action(context);
 		} else {
 			errors.add(new FormMessage(null, Messages.RECAPTCHA_FAILED));
 			formData.remove(G_RECAPTCHA_RESPONSE);
-			// context.error(Errors.INVALID_REGISTRATION);
-			// context.validationError(formData, errors);
-			// context.excludeOtherErrors();
+      context.getEvent().error(Messages.RECAPTCHA_FAILED);
+			Response challengeResponse = context.form().setError(Messages.RECAPTCHA_FAILED).createLogin();
+			context.forceChallenge(challengeResponse);
 			return;
 		}
 
@@ -93,7 +82,7 @@ public class RecaptchaUsernamePasswordForm extends UsernamePasswordForm implemen
 			logger.debug("action(AuthenticationFlowContext) - end");
 		}
 	}
-	
+
 	protected boolean validateRecaptcha(AuthenticationFlowContext context, boolean success, String captcha, String secret) {
 		HttpClient httpClient = context.getSession().getProvider(HttpClientProvider.class).getHttpClient();
 		HttpPost post = new HttpPost("https://www.google.com/recaptcha/api/siteverify");
@@ -117,6 +106,24 @@ public class RecaptchaUsernamePasswordForm extends UsernamePasswordForm implemen
 			ServicesLogger.LOGGER.recaptchaFailed(e);
 		}
 		return success;
-	}    
+	}
+
+	public void displayRecaptcha(AuthenticationFlowContext context) {
+		LoginFormsProvider forms = context.form();
+		AuthenticatorConfigModel captchaConfig = context.getAuthenticatorConfig();
+		String userLanguageTag = context.getSession().getContext().resolveLocale(context.getUser()).toLanguageTag();
+
+		if (captchaConfig == null || captchaConfig.getConfig() == null
+				|| captchaConfig.getConfig().get(SITE_KEY) == null
+				|| captchaConfig.getConfig().get(SITE_SECRET) == null) {
+				forms.addError(new FormMessage(null, Messages.RECAPTCHA_NOT_CONFIGURED));
+				return;
+		}
+
+	 String siteKey = captchaConfig.getConfig().get(SITE_KEY);
+	 forms.setAttribute("recaptchaRequired", true);
+	 forms.setAttribute("recaptchaSiteKey", siteKey);
+	 forms.addScript("https://www.google.com/recaptcha/api.js?hl=" + userLanguageTag);
+  }
 
 }
