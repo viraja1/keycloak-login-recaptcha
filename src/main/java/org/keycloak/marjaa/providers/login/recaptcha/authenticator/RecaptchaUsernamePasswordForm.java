@@ -72,7 +72,7 @@ public class RecaptchaUsernamePasswordForm extends UsernamePasswordForm implemen
 		} else {
 			errors.add(new FormMessage(null, Messages.RECAPTCHA_FAILED));
 			formData.remove(G_RECAPTCHA_RESPONSE);
-      context.getEvent().error(Messages.RECAPTCHA_FAILED);
+            context.getEvent().error(Messages.RECAPTCHA_FAILED);
 			Response challengeResponse = context.form().setError(Messages.RECAPTCHA_FAILED).createLogin();
 			context.forceChallenge(challengeResponse);
 			return;
@@ -114,16 +114,16 @@ public class RecaptchaUsernamePasswordForm extends UsernamePasswordForm implemen
 		String userLanguageTag = context.getSession().getContext().resolveLocale(context.getUser()).toLanguageTag();
 
 		if (captchaConfig == null || captchaConfig.getConfig() == null
-				|| captchaConfig.getConfig().get(SITE_KEY) == null
-				|| captchaConfig.getConfig().get(SITE_SECRET) == null) {
-				forms.addError(new FormMessage(null, Messages.RECAPTCHA_NOT_CONFIGURED));
-				return;
+			|| captchaConfig.getConfig().get(SITE_KEY) == null
+			|| captchaConfig.getConfig().get(SITE_SECRET) == null) {
+			forms.addError(new FormMessage(null, Messages.RECAPTCHA_NOT_CONFIGURED));
+			return;
 		}
 
-	 String siteKey = captchaConfig.getConfig().get(SITE_KEY);
-	 forms.setAttribute("recaptchaRequired", true);
-	 forms.setAttribute("recaptchaSiteKey", siteKey);
-	 forms.addScript("https://www.google.com/recaptcha/api.js?hl=" + userLanguageTag);
+	    String siteKey = captchaConfig.getConfig().get(SITE_KEY);
+	    forms.setAttribute("recaptchaRequired", true);
+	    forms.setAttribute("recaptchaSiteKey", siteKey);
+	    forms.addScript("https://www.google.com/recaptcha/api.js?hl=" + userLanguageTag);
   }
 
 }
